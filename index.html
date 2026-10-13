@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Prehistoric Bird Bash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Press+Start+2P&display=swap">
+<style>
+/* Layout: a handheld "field unit" console on the left, a parchment Bird Book on the right; stacks on phones */
+:root{
+  --jungle:#121b16;
+  --shell:#3b2b3e; --shell-hi:#56425c; --shell-lo:#271c2a; --bezel:#120f14;
+  --lava:#ff7a2f; --lava-soft:#ffb36b; --lava-deep:#8a3a12;
+  --leaf:#9ad46e;
+  --paper:#f0e3c0; --paper-2:#e2d0a2; --ink:#3a2a1c; --ink-soft:#7b634a; --stamp:#b3302a;
+  --text:#efe6d6; --muted:#b5a894;
+  --f-display:'Press Start 2P', ui-monospace, Menlo, Consolas, monospace;
+  --f-body:'Pixelify Sans', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--jungle)}
+[hidden]{display:none!important}
+body{color:var(--text);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  background:radial-gradient(ellipse at 75% -10%, #3d2516 0%, rgba(61,37,22,0) 55%), var(--jungle)}
+.page{max-width:1140px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
+header{display:grid;gap:6px;margin-bottom:18px}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(17px,3.2vw,28px);line-height:1.3;color:var(--lava-soft);
+  text-shadow:3px 3px 0 #000;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:60ch}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+.console{background:linear-gradient(180deg,var(--shell-hi),var(--shell) 30%,var(--shell-lo));
+  border-radius:22px 22px 44px 22px;padding:14px;display:grid;gap:10px;min-width:0;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.12),0 10px 30px rgba(0,0,0,.45)}
+.unit{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--f-display);font-size:8px;
+  letter-spacing:.12em;color:var(--muted)}
+.unit .led{width:8px;height:8px;border-radius:50%;background:var(--leaf);box-shadow:0 0 6px var(--leaf);display:inline-block;margin-right:6px;vertical-align:middle}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.tab{font-family:var(--f-body);font-size:clamp(11px,1.5vw,14px);background:var(--shell-lo);color:var(--text);
+  border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 4px;cursor:pointer;line-height:1.2;min-width:0}
+.tab kbd{font-family:var(--f-display);font-size:7px;color:var(--muted);display:block;margin-bottom:3px}
+.tab[aria-pressed="true"]{background:var(--lava);color:#1a0f08;border-color:var(--lava)}
+.tab[aria-pressed="true"] kbd{color:#3a1a08}
+.tab:disabled{opacity:.45;cursor:default}
+.screen{background:var(--bezel);border-radius:10px 10px 28px 10px;padding:10px}
+.viewport{position:relative;container-type:inline-size;border-radius:3px;overflow:hidden}
+#game{display:block;width:100%;height:auto;aspect-ratio:3/2;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none}
+.toast{position:absolute;left:50%;top:13%;transform:translateX(-50%);width:max-content;max-width:88%;
+  background:rgba(20,14,10,.88);color:var(--paper);font-size:clamp(11px,2.5cqw,17px);padding:.25em .7em;border-radius:4px;
+  border:1px solid rgba(255,179,107,.55);text-align:center;pointer-events:none;transition:opacity .25s}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;overflow:auto;background:rgba(12,9,14,.8);
+  padding:3cqw;font-size:clamp(11px,2.4cqw,17px)}
+.card{background:var(--paper);color:var(--ink);border-radius:4px;padding:1em 1.2em;max-width:32em;width:100%;
+  box-shadow:5px 5px 0 #000;display:grid;gap:.35em}
+.card h2{font-family:var(--f-display);font-weight:400;font-size:1.05em;margin:0;line-height:1.4;text-wrap:balance}
+.card p{margin:0}
+.eyebrow{font-size:.8em;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.eyebrow.warn{color:var(--stamp);font-weight:600}
+.sci{font-style:italic;color:var(--ink-soft)}
+.when{font-size:.85em;color:var(--ink-soft);border-top:1px dashed var(--paper-2);padding-top:.35em}
+.art{width:6em;height:4em;image-rendering:pixelated;justify-self:start;background:var(--paper-2);border-radius:3px}
+.title-card{background:transparent;color:var(--text);box-shadow:none;text-align:center;justify-items:center;padding:0}
+.title-card h2{font-size:1.5em;color:var(--lava-soft);text-shadow:3px 3px 0 #000}
+.title-card p{color:var(--text);max-width:30em}
+.pick{display:flex;gap:.6em;justify-content:center;flex-wrap:wrap}
+.av{background:var(--shell-lo);border:2px solid transparent;border-radius:6px;padding:.3em .5em .4em;cursor:pointer;color:var(--text);
+  font-family:var(--f-body);font-size:1em;display:grid;justify-items:center;gap:.1em}
+.av canvas{width:3.6em;height:3.6em;image-rendering:pixelated}
+.av[aria-pressed="true"]{border-color:var(--lava);background:#3a2418}
+.btn{font-family:var(--f-display);font-size:clamp(8px,1.7cqw,12px);background:var(--lava);color:#1a0f08;border:0;border-radius:4px;
+  padding:.9em 1.1em;box-shadow:0 3px 0 var(--lava-deep);cursor:pointer;justify-self:center}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--lava-deep)}
+.hint{font-size:.85em;color:var(--muted)}
+.stats-row{display:flex;gap:1.2em;justify-content:center;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.stats-row b{font-family:var(--f-display);font-weight:400;font-size:.9em;display:block;color:var(--lava-soft)}
+button:focus-visible,.entry:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+
+.strip{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font-family:var(--f-body);font-size:13px;background:var(--shell-lo);color:var(--text);border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--leaf);color:#14200d;border-color:var(--leaf)}
+.chip.poach[aria-pressed="true"]{background:var(--lava);border-color:var(--lava);color:#1a0f08}
+.chip kbd{font-family:var(--f-display);font-size:7px;opacity:.75;margin-left:4px}
+.strip .spacer{flex:1}
+.mute{background:transparent;border-color:rgba(255,255,255,.2)}
+
+.pad{display:none}
+@media (pointer:coarse){
+  .pad{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:4px 2px 2px}
+}
+.dpad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:2px}
+.dpad button,.acts button{background:var(--shell-lo);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+  font-family:var(--f-display);font-size:10px;touch-action:none;user-select:none;-webkit-user-select:none}
+.dpad [data-k="up"]{grid-column:2;grid-row:1}.dpad [data-k="left"]{grid-column:1;grid-row:2}
+.dpad [data-k="right"]{grid-column:3;grid-row:2}.dpad [data-k="down"]{grid-column:2;grid-row:3}
+.acts{display:grid;grid-template-columns:repeat(2,64px);gap:8px}
+.acts button{height:52px;border-radius:50%}
+.acts .a{background:var(--lava);color:#1a0f08}
+
+.book{background:var(--paper);color:var(--ink);border-radius:6px;padding:16px;min-width:0;
+  box-shadow:6px 6px 0 rgba(0,0,0,.4);
+  background-image:repeating-linear-gradient(180deg,rgba(58,42,28,0) 0 23px,rgba(58,42,28,.08) 23px 24px)}
+.book h2{font-family:var(--f-display);font-weight:400;font-size:13px;margin:0 0 10px;letter-spacing:.04em}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin:0 0 12px;
+  padding-bottom:10px;border-bottom:2px solid var(--ink)}
+.stats div{display:grid}
+.stats dt{font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em}
+.stats dd{margin:0;font-family:var(--f-display);font-size:12px;font-variant-numeric:tabular-nums}
+.hab{margin-top:10px}
+.hab h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin:0 0 4px;color:var(--ink-soft);
+  border-bottom:1px dashed var(--ink-soft);padding-bottom:2px}
+.hab ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.entry{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;align-items:center;padding:3px 4px;border-radius:4px;position:relative;
+  width:100%;background:transparent;border:0;color:inherit;font:inherit;text-align:left}
+.entry canvas{width:48px;height:36px;image-rendering:pixelated}
+.entry .nm{font-weight:600;font-size:14px;line-height:1.2;display:block}
+.entry .sc{font-style:italic;font-size:12px;color:var(--ink-soft);display:block;line-height:1.2}
+.entry.tagged{cursor:pointer}
+.entry.tagged:hover{background:rgba(58,42,28,.07)}
+.entry .stamp{position:absolute;right:4px;top:50%;transform:translateY(-50%) rotate(-8deg);font-family:var(--f-display);font-size:7px;
+  color:var(--stamp);border:1.5px solid var(--stamp);padding:2px 3px;border-radius:2px;opacity:.85}
+.entry .stamp.not{color:var(--ink-soft);border-color:var(--ink-soft)}
+
+.guide{margin-top:28px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.guide{grid-template-columns:minmax(0,1fr)}}
+.guide section{min-width:0}
+.guide h2{font-family:var(--f-display);font-weight:400;font-size:12px;color:var(--lava-soft);margin:0 0 10px;letter-spacing:.04em}
+.guide ol{margin:0;padding-left:1.3em;display:grid;gap:4px;max-width:60ch}
+.guide p{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.keys{width:100%;border-collapse:collapse;font-size:15px}
+.keys td{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.keys td:first-child{width:46%;color:var(--muted)}
+kbd.k{font-family:var(--f-display);font-size:9px;background:var(--shell-lo);border:1px solid rgba(255,255,255,.18);border-bottom-width:3px;
+  border-radius:4px;padding:2px 5px;color:var(--text);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<div class="page">
+  <header>
+    <h1>Prehistoric Bird Bash</h1>
+    <p class="sub">Bait, stun and tag 10 different prehistoric birds for your Bird Book. Catch poachers in the act for bonus points, and stay clear of the dinosaurs.</p>
+  </header>
+
+  <div class="layout">
+    <section class="console" aria-label="Game">
+      <div class="unit"><span><span class="led" aria-hidden="true"></span>FIELD UNIT</span><span id="zoneName">FOREST</span></div>
+      <div class="tabs" id="tabs" role="group" aria-label="Travel to habitat">
+        <button class="tab" id="tab0" data-z="0" aria-pressed="true"><kbd>1</kbd>Forest</button>
+        <button class="tab" id="tab1" data-z="1" aria-pressed="false"><kbd>2</kbd>Wetlands</button>
+        <button class="tab" id="tab2" data-z="2" aria-pressed="false"><kbd>3</kbd>Grasslands</button>
+        <button class="tab" id="tab3" data-z="3" aria-pressed="false"><kbd>4</kbd>Shoreline</button>
+      </div>
+      <div class="screen">
+        <div class="viewport">
+          <canvas id="game" width="240" height="160" aria-label="Game screen"></canvas>
+          <div class="toast" id="toast" style="opacity:0"></div>
+          <div class="overlay" id="overlay"></div>
+        </div>
+      </div>
+      <div class="strip">
+        <button class="chip" id="wSmall" aria-pressed="true">Bird blowgun</button>
+        <button class="chip poach" id="wBig" aria-pressed="false">Poacher blowgun<kbd>Q</kbd></button>
+        <button class="chip" id="baitBtn">Drop bait<kbd>B</kbd></button>
+        <span class="spacer"></span>
+        <button class="chip mute" id="muteBtn" aria-pressed="false">Sound on</button>
+      </div>
+      <div class="pad" aria-label="Touch controls">
+        <div class="dpad">
+          <button data-k="up" aria-label="Up">▲</button><button data-k="left" aria-label="Left">◀</button>
+          <button data-k="right" aria-label="Right">▶</button><button data-k="down" aria-label="Down">▼</button>
+        </div>
+        <div class="acts">
+          <button data-act="bait">BAIT</button><button data-act="fire" class="a">DART</button>
+          <button data-act="swap">SWAP</button><button data-act="tag" class="a">TAG</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="book" aria-label="Bird Book">
+      <h2>Bird Book</h2>
+      <dl class="stats">
+        <div><dt>Birds tagged</dt><dd id="sBirds">0 / 10</dd></div>
+        <div><dt>Poachers jailed</dt><dd id="sPoach">0 / 5</dd></div>
+        <div><dt>Score</dt><dd id="sScore">0</dd></div>
+        <div><dt>Best</dt><dd id="sBest">0</dd></div>
+      </dl>
+      <div id="bookList"></div>
+    </aside>
+  </div>
+
+  <div class="guide">
+    <section>
+      <h2>How a tag works</h2>
+      <ol>
+        <li>Drop bait (B) near birds, then step back. Birds come in to eat and get calmer.</li>
+        <li>Aim with the arrow keys and fire the bird blowgun (Space). A hit stuns the bird for 6 seconds.</li>
+        <li>Walk up to the stunned bird and press E to tag it. It goes into your Bird Book.</li>
+        <li>Each habitat has 4 or 5 species. Travel (1–4) to find 10 different ones.</li>
+      </ol>
+      <p>Each new species is worth 10 points. A poacher can only be stunned while netting a bird. Switch to the poacher blowgun (Q), stun them, then press E to jail them for 10 more. Jail 5 for the top score of 150. Dinosaur bites and poacher nets each cost a heart. Lose all 3 and the field season ends.</p>
+    </section>
+    <section>
+      <h2>Controls</h2>
+      <table class="keys">
+        <tr><td><kbd class="k">←↑↓→</kbd> or <kbd class="k">WASD</kbd></td><td>Walk and aim</td></tr>
+        <tr><td><kbd class="k">Space</kbd></td><td>Fire blowgun (hold to keep firing)</td></tr>
+        <tr><td><kbd class="k">E</kbd> or <kbd class="k">Enter</kbd></td><td>Tag a stunned bird, or jail a stunned poacher</td></tr>
+        <tr><td><kbd class="k">B</kbd></td><td>Drop bait</td></tr>
+        <tr><td><kbd class="k">Q</kbd></td><td>Swap blowguns</td></tr>
+        <tr><td><kbd class="k">1</kbd>–<kbd class="k">4</kbd></td><td>Travel to another habitat</td></tr>
+        <tr><td><kbd class="k">P</kbd> / <kbd class="k">M</kbd></td><td>Pause / sound on and off</td></tr>
+      </table>
+      <p>On a phone or tablet, use the buttons under the screen.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const W = 240, H = 160, WW = 480, WH = 320, TOP = 54;
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+// ---------- helpers ----------
+const rnd = Math.random;
+const rr = (a, b) => a + rnd() * (b - a);
+const pick = a => a[Math.floor(rnd() * a.length)];
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const dist = (a, b, c, d) => Math.hypot(a - c, b - d);
+function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function store(k, v){ try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+// ---------- data ----------
+const ZONES = [
+  { name:'Forest', g1:'#3f7a37', g2:'#4a8a3f', g3:'#356a30', seed:11, bait:'berries', dinos:[{c1:'#4f7a3a', c2:'#365a28', belly:'#a9b86a'}] },
+  { name:'Misty Wetlands', g1:'#4d7c5f', g2:'#58896a', g3:'#43705a', seed:22, bait:'snails', dinos:[{c1:'#5f6f4a', c2:'#434f33', belly:'#b9b98a', sail:'#b85a3a'}] },
+  { name:'Open Grasslands', g1:'#a5a246', g2:'#b6b259', g3:'#938f38', seed:33, bait:'seeds', dinos:[{c1:'#8a5a3a', c2:'#62402a', belly:'#d6b98a'},{c1:'#7a6a3a', c2:'#57492a', belly:'#d6c48a'}] },
+  { name:'Volcanic Shoreline', g1:'#d8c38a', g2:'#e3d09a', g3:'#c7b077', seed:44, bait:'fish', dinos:[{c1:'#4a4650', c2:'#33303a', belly:'#9a94a0'}] },
+];
+
+// shape: leg, bw, bh, neck, hw, hh, beak, bkh  (ground birds) | span, beak (flyers)
+const SPECIES = [
+  { id:'moa', zone:0, name:'Giant Moa', sci:'Dinornis robustus', type:'runner', leg:9, bw:11, bh:7, neck:9, hw:3, hh:3, beak:2, bkh:1, speed:22, shy:44,
+    c:{body:'#8b5e3c', dark:'#6a4329', head:'#7a5233', beak:'#d9c48f', leg:'#b59a6a'},
+    fact:'The tallest bird in New Zealand. With its neck stretched up, a big female stood about 3.6 m tall. Moa had no wings at all, not even tiny ones.', when:'New Zealand · gone about 600 years ago' },
+  { id:'haast', zone:0, name:"Haast's Eagle", sci:'Hieraaetus moorei', type:'flyer', span:14, beak:2, hook:true, speed:34, shy:50,
+    c:{body:'#6b4a2f', dark:'#3b2717', head:'#8a6a4a', beak:'#e6c34a', leg:'#e6c34a', extra:'#e8dcc0'},
+    fact:'The largest eagle ever known, with a wingspan near 3 m. It hunted moa, striking with talons as big as a tiger\'s claws. It died out when the moa did.', when:'New Zealand · gone about 600 years ago' },
+  { id:'dodo', zone:0, name:'Dodo', sci:'Raphus cucullatus', type:'runner', leg:3, bw:9, bh:7, neck:1, hw:4, hh:4, beak:4, bkh:2, hook:true, tuft:true, speed:14, shy:36,
+    c:{body:'#8d8f99', dark:'#6d6f78', head:'#9a9ca6', beak:'#d6b56a', leg:'#e2b84a', extra:'#f2efe6'},
+    fact:'A flightless pigeon about 1 m tall. With no predators on its island, it had no fear of people. The last confirmed sighting was in 1662.', when:'Mauritius · extinct by the late 1600s' },
+  { id:'micro', zone:0, name:'Microraptor', sci:'Microraptor gui', type:'flyer', span:10, beak:1, longtail:true, teeth:true, speed:30, shy:46,
+    c:{body:'#262636', dark:'#3c4c8a', head:'#2e2e40', beak:'#55556a', leg:'#55556a', extra:'#5a6cb0'},
+    fact:'A crow-sized feathered dinosaur, a close cousin of birds, with flight feathers on all four limbs. Fossils show its feathers had a glossy blue-black shine.', when:'China · about 120 million years ago' },
+
+  { id:'shoebill', zone:1, name:'Shoebill', sci:'Balaeniceps rex', type:'wader', leg:9, bw:8, bh:7, neck:4, hw:4, hh:4, beak:5, bkh:3, hook:true, speed:10, shy:34,
+    c:{body:'#8fa0ad', dark:'#6f818f', head:'#9aaab6', beak:'#c9b07a', leg:'#3b3f44'},
+    fact:'Still alive today in East African swamps, so it is a living link with a prehistoric look. Its shoe-shaped bill can grab lungfish. It stands still for long stretches, then strikes fast.', when:'East Africa · living today' },
+  { id:'elephant', zone:1, name:'Elephant Bird', sci:'Aepyornis maximus', type:'runner', leg:7, bw:14, bh:10, neck:7, hw:3, hh:3, beak:3, bkh:1, speed:14, shy:40,
+    c:{body:'#5b4a3d', dark:'#463729', head:'#6a584a', beak:'#bfae8a', leg:'#8f7e66'},
+    fact:'Possibly the heaviest bird ever, about 3 m tall. Its eggs held as much as roughly 150 chicken eggs, bigger than any known dinosaur egg.', when:'Madagascar · gone about 1,000 years ago' },
+  { id:'presby', zone:1, name:'Presbyornis', sci:'Presbyornis pervetus', type:'wader', leg:8, bw:7, bh:5, neck:6, hw:3, hh:3, beak:3, bkh:2, speed:18, shy:44,
+    c:{body:'#e3d8c4', dark:'#a89a83', head:'#5f8a5a', beak:'#d9a23a', leg:'#e48b5a'},
+    fact:'A duck-like head on long, flamingo-like legs. It nested in huge colonies on lake shores and filtered food from shallow water.', when:'North America · about 55 million years ago' },
+  { id:'confu', zone:1, name:'Confuciusornis', sci:'Confuciusornis sanctus', type:'flyer', span:9, beak:2, streamers:true, speed:26, shy:46,
+    c:{body:'#4a4a52', dark:'#2e2e36', head:'#5a5a62', beak:'#3a3a3a', leg:'#3a3a3a', extra:'#8a8a94'},
+    fact:'One of the first birds with a toothless beak. Some had two long ribbon-like tail feathers, which may have been for display.', when:'China · about 125 million years ago' },
+
+  { id:'terror', zone:2, name:'Terror Bird', sci:'Phorusrhacos longissimus', type:'runner', leg:8, bw:10, bh:7, neck:5, hw:5, hh:4, beak:4, bkh:3, hook:true, speed:30, shy:48,
+    c:{body:'#c9a26a', dark:'#8a6a3e', head:'#d7b47c', beak:'#e0cf9e', leg:'#6b5a3c'},
+    fact:'Terror birds were flightless hunters, some about 2.5 m tall, with hooked beaks they swung like axes. They ruled South American plains for millions of years.', when:'South America · until about 2 million years ago' },
+  { id:'argent', zone:2, name:'Argentavis', sci:'Argentavis magnificens', type:'flyer', span:18, beak:2, hook:true, ruff:true, speed:26, shy:50,
+    c:{body:'#2b2a2a', dark:'#1b1a1a', head:'#c98a7a', beak:'#d8cba8', leg:'#8a7a6a', extra:'#ece6da'},
+    fact:'One of the largest flying birds ever, with wings around 6 to 7 m across. It soared on rising warm air like a giant condor.', when:'Argentina · about 6 million years ago' },
+  { id:'kelenken', zone:2, name:'Kelenken', sci:'Kelenken guillermoi', type:'runner', leg:9, bw:10, bh:7, neck:6, hw:7, hh:5, beak:5, bkh:4, hook:true, speed:28, shy:46,
+    c:{body:'#6f5a49', dark:'#4e3d30', head:'#7e6856', beak:'#e3d2a1', leg:'#4e3d30'},
+    fact:'A terror bird with the largest skull of any bird known, about 71 cm long. Its beak alone was nearly half a meter.', when:'Patagonia · about 15 million years ago' },
+  { id:'gastornis', zone:2, name:'Gastornis', sci:'Gastornis giganteus', type:'runner', leg:6, bw:12, bh:9, neck:4, hw:6, hh:5, beak:4, bkh:5, speed:16, shy:38,
+    c:{body:'#3e5a6b', dark:'#2d4352', head:'#4a6a7d', beak:'#e8c35a', leg:'#c9a34a'},
+    fact:'A 2 m tall bird with an enormous beak. Scientists once thought it hunted animals, but now think it mostly cracked tough plants and seeds.', when:'Europe and North America · about 55 to 45 million years ago' },
+
+  { id:'pelag', zone:3, name:'Pelagornis', sci:'Pelagornis sandersi', type:'flyer', span:20, beak:4, teeth:true, speed:30, shy:50,
+    c:{body:'#f1efe8', dark:'#3a3f46', head:'#f6f4ee', beak:'#d9b56a', leg:'#d9b56a'},
+    fact:'Possibly the largest flying bird ever, with wings up to about 7 m across. Bony, tooth-like spikes on its beak gripped slippery fish and squid.', when:'Atlantic coast, USA · about 25 million years ago' },
+  { id:'hesper', zone:3, name:'Hesperornis', sci:'Hesperornis regalis', type:'swimmer', leg:0, bw:10, bh:4, neck:4, hw:3, hh:2, beak:4, bkh:1, speed:16, shy:36,
+    c:{body:'#3d4a57', dark:'#2a333c', head:'#4a5866', beak:'#cfc39e', leg:'#2a333c'},
+    fact:'A flightless diving bird with teeth and tiny wings. It swam with powerful feet, like a loon, hunting fish in an ancient inland sea.', when:'North America · about 85 million years ago' },
+  { id:'ichthy', zone:3, name:'Ichthyornis', sci:'Ichthyornis dispar', type:'flyer', span:9, beak:2, teeth:true, speed:34, shy:48,
+    c:{body:'#f2f2ee', dark:'#8c96a0', head:'#f2f2ee', beak:'#e2b04a', leg:'#e2b04a'},
+    fact:'A tern-sized seabird with teeth in its beak. Its skull mixes dinosaur-like jaws with a brain much like a modern bird\'s.', when:'North America · about 90 million years ago' },
+  { id:'archae', zone:3, name:'Archaeopteryx', sci:'Archaeopteryx lithographica', type:'flyer', span:10, beak:2, longtail:true, teeth:true, speed:24, shy:44,
+    c:{body:'#3a3330', dark:'#1f1c1b', head:'#4a403b', beak:'#5a5550', leg:'#5a5550', extra:'#2a2422'},
+    fact:'The famous early bird. It had feathers and wings, but also teeth, clawed fingers and a long bony tail. It lived on islands in a warm, shallow sea.', when:'Germany · about 150 million years ago' },
+  { id:'ptero', zone:3, name:'Pteranodon', sci:'Pteranodon longiceps', type:'ptero', span:20, beak:5, special:true, speed:28, shy:50,
+    c:{body:'#c9b9a0', dark:'#a0623f', head:'#d4c4aa', beak:'#e3d5b5', leg:'#a0623f', extra:'#c4452f'},
+    fact:'Not a bird! This "pterodactyl" is a pterosaur, a flying reptile. Pterosaurs were close cousins of dinosaurs, not lizards. Its wings were skin stretched from one huge finger, about 6 m across, and its beak had no teeth.', when:'North America · about 85 million years ago' },
+];
+const BY_ZONE = [0,1,2,3].map(z => SPECIES.filter(s => s.zone === z));
+const isFlyer = sp => sp.type === 'flyer' || sp.type === 'ptero';
+
+const AVATARS = [
+  { name:'Kai',   skin:'#c68a5c', hair:'#2a1d16', shirt:'#c9b27a', shorts:'#7a5a36', hatc:'#e6d6a2' },
+  { name:'Robin', skin:'#f0c9a2', hair:'#b5462b', shirt:'#8a9a5b', shorts:'#6b5233', hatc:'#eadfb4', pony:true },
+  { name:'Sam',   skin:'#7a4a2e', hair:'#1a1210', shirt:'#d9a75a', shorts:'#5b4630', hatc:'#d7c48c' },
+];
+const POACHER = { skin:'#d1a07a', hair:'#2a2a2a', shirt:'#4a3a4f', shorts:'#2e2a33', cap:true, hatc:'#262626', bandana:true };
+
+// ---------- terrain ----------
+function ellipse(g, cx, cy, rx, ry, col){
+  g.fillStyle = col;
+  for (let dy = -ry; dy <= ry; dy++){
+    const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy*dy)/(ry*ry))));
+    g.fillRect(Math.round(cx - w), Math.round(cy + dy), w*2, 1);
+  }
+}
+function buildTerrain(zi){
+  const Z = ZONES[zi], r = mulberry(Z.seed);
+  const c = document.createElement('canvas'); c.width = WW; c.height = WH;
+  const g = c.getContext('2d');
+  const R = (x,y,w,h,col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); };
+  const obs = [];
+  const maxY = zi === 3 ? 266 : WH - 6;
+  const spawn = { x:240, y:maxY - 30 };
+  const free = (x, y, pad) => dist(x, y, spawn.x, spawn.y) > 40 && obs.every(o => dist(x, y, o.x, o.y) > o.r + pad);
+
+  R(0,0,WW,WH,Z.g1);
+  for (let i = 0; i < 16; i++) ellipse(g, r()*WW, TOP + r()*(WH-TOP), 12 + r()*24, 5 + r()*10, Z.g2);
+  for (let i = 0; i < 2600; i++) R(r()*WW, r()*WH, r() < .3 ? 2 : 1, 1, r() < .5 ? Z.g2 : Z.g3);
+
+  // sky, ridge, cliff, volcano (the "distant" volcano sits on the north edge of every map)
+  const sky = ['#f6c58f','#f0b07c','#e99a6a','#dc8a62'];
+  for (let y = 0; y < TOP; y++) R(0, y, WW, 1, sky[Math.min(3, Math.floor(y/7))]);
+  for (let x = 0; x < WW; x++){
+    const yt = Math.round(22 + 5*Math.sin(x*.045 + Z.seed) + 3*Math.sin(x*.11 + Z.seed*2));
+    R(x, yt, 1, TOP - yt, '#6d5a57');
+    R(x, yt, 1, 1, '#8a7570');
+    R(x, yt + 12, 1, TOP - yt - 12, '#5c4a48');
+  }
+  const vx = Math.round(120 + r()*240);
+  for (let y = 4; y < TOP - 4; y++){
+    const hw = Math.round(9 + (y-4)*1.5);
+    R(vx - hw, y, hw*2, 1, '#5a4646');
+    R(vx, y, hw, 1, '#4a3838');
+  }
+  for (let k = 0; k < 3; k++){
+    let x = vx - 4 + k*4;
+    for (let y = 6; y < 34; y++){ if (r() < .45) x += r() < .5 ? -1 : 1; R(x, y, 1, 1, r() < .25 ? '#ffd36b' : '#ff7a2f'); }
+  }
+  R(vx-9, 3, 18, 3, '#ff7a2f'); R(vx-6, 3, 12, 1, '#ffd36b');
+  R(0, TOP-6, WW, 6, '#4a3b3a'); R(0, TOP-6, WW, 1, '#8a7570');
+  for (let x = 0; x < WW; x += 6) R(x + (x%12?2:0), TOP-4, 2, 3, '#3a2e2d');
+
+  const cycad = (x, y) => {
+    ellipse(g, x+2, y+1, 6, 2, 'rgba(0,0,0,.22)');
+    for (let i = 0; i < 9; i++) R(x-1, y-i, 3, 1, i%2 ? '#6b5233' : '#7d6340');
+    const leaves = [[-1,-1],[1,-1],[-1,0],[1,0],[-.6,-1.4],[.6,-1.4]];
+    leaves.forEach(([dx,dy]) => { for (let i = 1; i <= 8; i++) R(x + dx*i, y - 10 + dy*i*.6 + (i>5? (i-5)*.7:0), 2, 1, i%3 ? '#3f8a3a' : '#5aa548'); });
+    obs.push({ x, y:y-1, r:4 });
+  };
+
+  if (zi === 0){
+    for (let i = 0; i < 70; i++){ const x = r()*WW, y = TOP + 8 + r()*(WH-TOP-10); R(x,y,1,3,'#2f5e2a'); R(x-2,y+1,2,1,'#2f5e2a'); R(x+1,y+1,2,1,'#2f5e2a'); }
+    for (let i = 0; i < 18; i++){ const x = r()*WW, y = TOP + 10 + r()*(WH-TOP-14); R(x,y,1,1,'#f2d35a'); R(x+3,y+2,1,1,'#e86a5a'); }
+    const trees = [];
+    for (let n = 0; n < 200 && trees.length < 22; n++){
+      const x = 12 + r()*(WW-24), y = TOP + 28 + r()*(WH-TOP-34);
+      if (free(x, y, 18)){ trees.push({x,y}); obs.push({ x, y:y-2, r:5 }); }
+    }
+    trees.sort((a,b) => a.y - b.y).forEach(({x,y}) => {
+      ellipse(g, x+3, y+1, 10, 3, 'rgba(0,0,0,.25)');
+      R(x-2, y-9, 4, 10, '#5b3a22'); R(x-2, y-9, 1, 10, '#6e4a2c');
+      ellipse(g, x, y-17, 11, 9, '#2c5e2a'); ellipse(g, x-2, y-19, 8, 6, '#3b7a34'); ellipse(g, x-4, y-21, 3, 2, '#5c9a46');
+    });
+    for (let n = 0; n < 100 && obs.length < 30; n++){ const x = 12 + r()*(WW-24), y = TOP + 26 + r()*(WH-TOP-32); if (free(x,y,16)) cycad(x,y); }
+  } else if (zi === 1){
+    for (let i = 0; i < 7; i++){
+      const x = 30 + r()*(WW-60), y = TOP + 30 + r()*(WH-TOP-60), rx = 18 + r()*24, ry = 8 + r()*8;
+      if (dist(x,y,spawn.x,spawn.y) < rx + 20) continue;
+      ellipse(g, x, y, rx+2, ry+2, '#3d6a55'); ellipse(g, x, y, rx, ry, '#4f9db0'); ellipse(g, x-3, y-2, rx*.6, ry*.4, '#62adbd');
+      for (let k = 0; k < 4; k++) R(x - rx*.6 + r()*rx*1.2, y - ry*.5 + r()*ry, 4, 1, '#9fd3db');
+      for (let k = 0; k < 3; k++){ const lx = x - rx*.5 + r()*rx, ly = y - ry*.4 + r()*ry*.8; ellipse(g, lx, ly, 2, 1, '#5d9a48'); }
+    }
+    for (let i = 0; i < 55; i++){
+      const x = r()*WW, y = TOP + 10 + r()*(WH-TOP-12), n = 3 + Math.floor(r()*3);
+      for (let k = 0; k < n; k++){ const h = 5 + Math.floor(r()*5); R(x + k*2, y - h, 1, h, '#6d8f3e'); if (r() < .5) R(x + k*2, y - h - 1, 1, 2, '#6b4a2b'); }
+    }
+    for (let n = 0; n < 80 && obs.length < 7; n++){ const x = 14 + r()*(WW-28), y = TOP + 22 + r()*(WH-TOP-30); if (free(x,y,20)){ ellipse(g,x+2,y+2,7,3,'rgba(0,0,0,.2)'); ellipse(g,x,y-2,7,5,'#6b766a'); ellipse(g,x-2,y-4,4,2,'#7e9a6a'); obs.push({x,y:y-1,r:6}); } }
+    for (let n = 0; n < 80 && obs.length < 12; n++){ const x = 12 + r()*(WW-24), y = TOP + 26 + r()*(WH-TOP-32); if (free(x,y,18)) cycad(x,y); }
+  } else if (zi === 2){
+    for (let t = 0; t < WW; t += 3){ const y = 200 + Math.sin(t*.02)*40 + Math.sin(t*.05)*10; ellipse(g, t, y, 7, 4, '#b89c5c'); }
+    for (let t = 0; t < WW; t += 4){ const y = 200 + Math.sin(t*.02)*40 + Math.sin(t*.05)*10; R(t, y - 1 + (t%8?1:0), 1, 1, '#a68a4e'); }
+    for (let i = 0; i < 170; i++){ const x = r()*WW, y = TOP + 8 + r()*(WH-TOP-10); R(x,y,1,2,'#7f7d2e'); R(x+1,y-1,1,3,'#8c8a34'); R(x+2,y,1,2,'#cfcb72'); }
+    for (let i = 0; i < 25; i++){ const x = r()*WW, y = TOP + 8 + r()*(WH-TOP-10); R(x,y,1,1,'#f4f0e0'); R(x+4,y+3,1,1,'#e9b84a'); }
+    for (let n = 0; n < 120 && obs.length < 10; n++){
+      const x = 14 + r()*(WW-28), y = TOP + 20 + r()*(WH-TOP-26), s = 5 + Math.floor(r()*4);
+      if (free(x,y,16)){ ellipse(g,x+2,y+2,s+1,3,'rgba(0,0,0,.22)'); ellipse(g,x,y-2,s,s-1,'#8a8178'); ellipse(g,x-2,y-4,s-3,2,'#aaa196'); obs.push({x,y:y-1,r:s}); }
+    }
+    for (let n = 0; n < 120 && obs.length < 15; n++){
+      const x = 20 + r()*(WW-40), y = TOP + 34 + r()*(WH-TOP-40);
+      if (free(x,y,22)){ ellipse(g,x+3,y+1,14,3,'rgba(0,0,0,.22)'); R(x-1,y-12,3,13,'#6b5233'); R(x-5,y-14,4,1,'#6b5233'); R(x+2,y-15,4,1,'#6b5233');
+        ellipse(g,x,y-18,15,4,'#5f7a2e'); ellipse(g,x-2,y-19,10,2,'#76923a'); obs.push({x,y:y-1,r:4}); }
+    }
+  } else {
+    R(0, 262, WW, 10, '#bfa56c');
+    R(0, 272, WW, WH-272, '#2f7fae');
+    for (let y = 280; y < WH; y += 7) for (let x = (y*7)%13; x < WW; x += 13 + (y%5)) R(x, y, 5, 1, '#4a9cc6');
+    for (let i = 0; i < 40; i++){ const x = r()*WW, y = TOP + 10 + r()*(250-TOP); R(x,y,2,1,'#f4ecd8'); R(x+6,y+4,1,1,'#e88a6a'); }
+    for (let i = 0; i < 4; i++){ const x = 40 + r()*(WW-80), y = 160 + r()*80; if (dist(x,y,spawn.x,spawn.y) > 50){ ellipse(g,x,y,10,4,'#a8925e'); ellipse(g,x,y,8,3,'#4a9cc6'); } }
+    for (let n = 0; n < 140 && obs.length < 13; n++){
+      const x = 14 + r()*(WW-28), y = TOP + 20 + r()*(240-TOP), s = 5 + Math.floor(r()*5);
+      if (free(x,y,16)){ ellipse(g,x+2,y+2,s+1,3,'rgba(0,0,0,.25)'); ellipse(g,x,y-2,s,s-1,'#2e2a2c'); ellipse(g,x-2,y-4,s-3,2,'#4a4448');
+        R(x-1,y-3,1,2,'#ff7a2f'); R(x,y-2,2,1,'#ff7a2f'); obs.push({x,y:y-1,r:s}); }
+    }
+    for (let n = 0; n < 80 && obs.length < 17; n++){ const x = 12 + r()*(WW-24), y = TOP + 26 + r()*(220-TOP); if (free(x,y,18)) cycad(x,y); }
+  }
+  return { canvas:c, obs, volcX:vx, maxY, spawn };
+}
+const TERRAIN = [0,1,2,3].map(buildTerrain);
+
+// ---------- sprites ----------
+function mirrorR(c, x, y, dir, sil){
+  return (dx, dy, w, h, k, colors) => {
+    c.fillStyle = sil || (k[0] === '#' || k[0] === 'r' ? k : colors[k]);
+    const X = dir > 0 ? x + dx : x - dx - w;
+    c.fillRect(Math.round(X), Math.round(y + dy), w, h);
+  };
+}
+function drawBird(c, sp, x, y, t, dir, mode, alt, sil){
+  const base = mirrorR(c, x, y - (alt||0), dir, sil);
+  const R = (dx,dy,w,h,k) => base(dx,dy,w,h,k,sp.c);
+  if (isFlyer(sp)) return drawFlyer(R, sp, t, mode, alt||0);
+  const L = sp.type === 'swimmer' ? 0 : sp.leg;
+  const st = mode === 'walk' ? Math.floor(t*8) % 2 : 0;
+  if (L > 0){
+    R(-2+st, -L, 1, L, 'leg'); R(1-st, -L, 1, L, 'leg');
+    R(-2+st, -1, 2, 1, 'leg'); R(1-st, -1, 2, 1, 'leg');
+  }
+  const hb = Math.floor(sp.bw/2);
+  const by = -L - sp.bh + (sp.type === 'swimmer' ? 1 : 0);
+  R(-hb, by, sp.bw, sp.bh, 'body');
+  R(-hb+1, by+1, Math.max(2,hb), Math.max(1, sp.bh-2), 'dark');
+  R(-hb-2, by, 2, 2, 'dark');
+  if (sp.tuft) R(-hb-3, by-1, 2, 2, 'extra');
+  const nx = hb - 2;
+  let hx, hy;
+  const peck = mode === 'eat' && Math.floor(t*3) % 2 === 0;
+  if (peck){
+    R(nx, by, 2, sp.bh, 'body');
+    R(nx+1, -L, 2, Math.max(0, L - sp.hh - 1), 'body');
+    hx = hb - 1; hy = -sp.hh - 1;
+  } else {
+    R(nx, by - sp.neck, 2, sp.neck + 1, 'body');
+    hx = nx; hy = by - sp.neck - sp.hh + 1;
+  }
+  R(hx, hy, sp.hw, sp.hh, 'head');
+  const bky = hy + sp.hh - sp.bkh;
+  R(hx + sp.hw, bky, sp.beak, sp.bkh, 'beak');
+  if (sp.hook) R(hx + sp.hw + sp.beak - 1, bky + sp.bkh, 1, 1, 'beak');
+  if (mode === 'stun') R(hx + sp.hw - 2, hy + 1, 2, 1, '#141414');
+  else R(hx + sp.hw - 2, hy + 1, 1, 1, '#141414');
+  if (sp.type === 'swimmer') R(-hb-2, 0, sp.bw + 5, 1, '#bfe6ee');
+}
+function drawFlyer(R, sp, t, mode, alt){
+  const ptero = sp.type === 'ptero';
+  const ground = alt < 2 && mode !== 'fly';
+  const oy = ground ? -2 : 0;
+  if (ground){ R(-1,-2,1,2,'leg'); R(1,-2,1,2,'leg'); }
+  R(-3, -5+oy, 7, 3, 'body');
+  if (!ptero){
+    if (sp.longtail){ R(-8,-4+oy,5,1,'dark'); R(-10,-4+oy,2,1,'extra'); }
+    else R(-6,-5+oy,3,2,'dark');
+    if (sp.streamers){ R(-9,-3+oy,6,1,'extra'); R(-12,-2+oy,3,1,'extra'); }
+  }
+  R(3, -7+oy, 3, 3, 'head');
+  R(6, -6+oy, sp.beak, 1, 'beak');
+  if (sp.hook) R(5 + sp.beak, -5+oy, 1, 1, 'beak');
+  if (sp.teeth){ R(7,-5+oy,1,1,'#f4f1e6'); if (sp.beak > 2) R(9,-5+oy,1,1,'#f4f1e6'); }
+  if (ptero){ R(0,-8+oy,4,1,'extra'); R(-3,-9+oy,4,1,'extra'); }
+  if (sp.ruff) R(2,-5+oy,2,2,'extra');
+  if (mode === 'stun') R(4,-6+oy,2,1,'#141414'); else R(4,-6+oy,1,1,'#141414');
+  if (ground){
+    R(-2,-6+oy,6,2,'dark');
+    if (ptero) R(-3,-5+oy,2,3,'dark');
+  } else {
+    const f = [0,1,2,1][Math.floor(t*(ptero ? 6 : 9)) % 4];
+    const tip = [-4,-1,2][f];
+    const wl = Math.round(sp.span/2);
+    for (const s of [-1, 1]) for (let i = 1; i <= wl; i++){
+      const dy = Math.round(tip*i/wl);
+      const h = (ptero || i < wl*.6) ? 2 : 1;
+      R(s > 0 ? i : -i, -6 + dy, 1, h, 'dark');
+    }
+  }
+}
+function drawPerson(c, o, x, y, dir4, t, moving, gun, ax, ay){
+  const R = (dx,dy,w,h,col) => { c.fillStyle = col; c.fillRect(Math.round(x+dx), Math.round(y+dy), w, h); };
+  const st = moving ? Math.floor(t*8) % 2 : 0;
+  const side = dir4 === 'left' || dir4 === 'right';
+  const f = dir4 === 'left' ? -1 : 1;
+  R(-4,-1,9,2,'rgba(0,0,0,.25)');
+  const drawGun = () => {
+    if (!gun) return;
+    const big = gun === 'big';
+    const sx = x + ax*3, sy = y - 10 + ay*2, L = big ? 11 : 8, w = big ? 2 : 1;
+    for (let i = 0; i < L; i++){
+      c.fillStyle = big ? (i === L-1 ? '#ff7a2f' : (i%4 === 0 ? '#2f3a22' : '#5a6b3a')) : (i%3 === 0 ? '#9a7a45' : '#c8a165');
+      c.fillRect(Math.round(sx + ax*i), Math.round(sy + ay*i), w, w);
+    }
+  };
+  if (dir4 === 'up') drawGun();
+  // legs and boots
+  if (side){
+    R(-2 + st*f, -5, 2, 4, o.skin); R(0 - st*f, -5, 2, 4, o.skin);
+    R(-2 + st*f, -2, 2, 2, '#4a3322'); R(0 - st*f, -2, 3, 2, '#4a3322');
+  } else {
+    R(-3, -5, 2, 4 - st, o.skin); R(1, -5, 2, 3 + st, o.skin);
+    R(-3, -2 - st, 2, 2, '#4a3322'); R(1, -3 + st, 2, 2, '#4a3322');
+  }
+  R(-4,-7,8,3,o.shorts);
+  R(-4,-12,8,5,o.shirt);
+  R(-4,-8,8,1,'#3b2a1a');
+  if (side) R(f > 0 ? 1 : -2, -11, 2, 4, o.skin);
+  else { R(-5,-11,1,4,o.skin); R(4,-11,1,4,o.skin); R(-5,-12,1,1,o.shirt); R(4,-12,1,1,o.shirt); }
+  // head
+  R(-3,-17,6,5,o.skin);
+  if (dir4 === 'up'){ R(-3,-17,6,4,o.hair); if (o.pony) R(-1,-14,2,3,o.hair); }
+  else if (side){ R(f > 0 ? -3 : 2, -16, 1, 3, o.hair); R(f > 0 ? 1 : -2, -15, 1, 1, '#1a1410'); if (o.pony) R(f > 0 ? -5 : 3, -15, 2, 3, o.hair); }
+  else { R(-3,-16,1,3,o.hair); R(2,-16,1,3,o.hair); R(-2,-15,1,1,'#1a1410'); R(1,-15,1,1,'#1a1410'); }
+  if (o.bandana && dir4 !== 'up') R(-3,-14,6,2,'#b3302a');
+  // hat
+  if (o.cap){
+    R(-3,-19,6,3,o.hatc);
+    if (side) R(f > 0 ? 2 : -5, -17, 3, 1, o.hatc); else if (dir4 === 'down') R(-3,-17,6,1,'#111');
+  } else {
+    R(-5,-17,10,2,o.hatc); R(-3,-20,6,3,o.hatc); R(-3,-18,6,1,'#6b4a2b'); R(-2,-20,3,1,'#f6ecc8'); R(-5,-16,10,1,'rgba(0,0,0,.18)');
+  }
+  if (dir4 !== 'up') drawGun();
+}
+function drawDino(c, d, t){
+  const C = ZONES[zone].dinos[d.kind];
+  const R0 = mirrorR(c, d.x, d.y, d.dir);
+  const R = (dx,dy,w,h,k) => R0(dx,dy,w,h,k,C);
+  const st = d.moving ? Math.floor(t*(d.state === 'chase' ? 10 : 5)) % 2 : 0;
+  c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(Math.round(d.x - 13), Math.round(d.y - 1), 26, 3);
+  R(-3+st,-6,3,6,'c2'); R(2-st,-6,3,6,'c2'); R(-4+st,-1,4,1,'c2'); R(1-st,-1,4,1,'c2');
+  if (C.sail) for (let i = 0; i < 6; i++){ const h = 2 + (i < 3 ? i : 5 - i)*2; R(-6 + i*2, -14 - h, 2, h, 'sail'); }
+  R(-7,-14,14,8,'c1'); R(-5,-8,10,2,'belly');
+  R(-12,-13,5,4,'c1'); R(-16,-12,4,3,'c1'); R(-19,-11,3,2,'c1');
+  R(-4,-14,2,1,'c2'); R(0,-14,2,1,'c2'); R(-10,-13,2,1,'c2');
+  R(5,-19,5,6,'c1');
+  const open = d.state === 'chase' && Math.floor(t*6) % 2 === 0 ? 1 : 0;
+  R(6,-22,9,5,'c1'); R(8,-17+open,7,2,'c2');
+  R(9,-17,1,1,'#f4f1e6'); R(11,-17,1,1,'#f4f1e6'); R(13,-17,1,1,'#f4f1e6');
+  R(10,-21,1,1,'#ff3b2f');
+  R(6,-12,2,2,'c2');
+}
+
+// ---------- game state ----------
+let state = 'title', avatarIdx = 0, zone = 0;
+let player, birds = [], darts = [], nets = [], poacher = null, dinos = [], baits = [], parts = [];
+let tagged = [], jailed = 0, hearts = 3, score = 0, weapon = 'small';
+let fireCd = 0, baitCd = 0, poacherTimer = 20, respawnT = 0, playTime = 0, shake = 0, time = 0, uiT = 0;
+let hints = {};
+let best = parseInt(store('pbb-best') || '0', 10) || 0;
+let muted = store('pbb-muted') === '1';
+const keys = {};
+
+function newPlayer(){ return { x:240, y:240, ax:0, ay:1, dir4:'down', moving:false, inv:0, kx:0, ky:0, t:0 }; }
+player = newPlayer();
+
+// ---------- sound ----------
+let actx = null;
+function beep(freqs, dur = .07, type = 'square', vol = .04){
+  if (muted) return;
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const t0 = actx.currentTime;
+    freqs.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(vol, t0 + i*dur);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + (i+1)*dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0 + i*dur); o.stop(t0 + (i+1)*dur + .02);
+    });
+  } catch (e) {}
+}
+
+// ---------- DOM ----------
+const $ = id => document.getElementById(id);
+const overlay = $('overlay'), toast = $('toast');
+let toastTimer = 0;
+function setMsg(text, dur = 2.8){ toast.textContent = text; toast.style.opacity = '1'; toastTimer = dur; }
+function hint(key, text){ if (!hints[key]){ hints[key] = true; setMsg(text, 3.4); } }
+function showOverlay(html){ overlay.innerHTML = html; overlay.hidden = false; }
+function hideOverlay(){ overlay.hidden = true; overlay.innerHTML = ''; }
+
+function buildBook(){
+  const names = ['Forest','Misty Wetlands','Open Grasslands','Volcanic Shoreline'];
+  $('bookList').innerHTML = names.map((n, z) => `<div class="hab"><h3>${n}</h3><ul>${BY_ZONE[z].map(sp =>
+    `<li><button class="entry" id="e-${sp.id}" data-id="${sp.id}" tabindex="-1"><canvas width="24" height="18"></canvas><span><span class="nm">${sp.name}</span><span class="sc">${sp.sci}</span></span></button></li>`).join('')}</ul></div>`).join('');
+  $('bookList').addEventListener('click', e => {
+    const b = e.target.closest('.entry'); if (!b || !b.classList.contains('tagged')) return;
+    const sp = SPECIES.find(s => s.id === b.dataset.id);
+    if (state === 'play' || state === 'pause') showCard(sp, false);
+  });
+}
+function renderBook(){
+  SPECIES.forEach(sp => {
+    const el = $('e-' + sp.id), got = tagged.includes(sp.id);
+    el.classList.toggle('tagged', got);
+    el.tabIndex = got ? 0 : -1;
+    const cc = el.querySelector('canvas'), g = cc.getContext('2d');
+    g.clearRect(0,0,24,18); g.imageSmoothingEnabled = false;
+    const fly = isFlyer(sp);
+    drawBird(g, sp, fly ? 12 : 12, fly ? 15 : 17, 0, 1, fly ? 'fly' : 'idle', fly ? 3 : 0, got ? null : '#7b634a');
+    let stamp = el.querySelector('.stamp');
+    if (got && !stamp){ stamp = document.createElement('span'); stamp.className = 'stamp' + (sp.special ? ' not' : ''); stamp.textContent = sp.special ? 'NOT A BIRD' : 'TAGGED'; el.appendChild(stamp); }
+    if (!got && stamp) stamp.remove();
+  });
+}
+function updateUI(){
+  $('sBirds').textContent = `${tagged.length} / 10`;
+  $('sPoach').textContent = `${jailed} / 5`;
+  $('sScore').textContent = score;
+  $('sBest').textContent = best;
+  $('wSmall').setAttribute('aria-pressed', weapon === 'small');
+  $('wBig').setAttribute('aria-pressed', weapon === 'big');
+  $('baitBtn').firstChild.textContent = baitCd > 0 ? `Bait in ${Math.ceil(baitCd)}s` : 'Drop bait';
+  $('muteBtn').textContent = muted ? 'Sound off' : 'Sound on';
+  $('muteBtn').setAttribute('aria-pressed', muted);
+  $('zoneName').textContent = ZONES[zone].name.toUpperCase();
+  for (let i = 0; i < 4; i++){ $('tab'+i).setAttribute('aria-pressed', i === zone); $('tab'+i).disabled = state !== 'play'; }
+}
+
+// ---------- world ----------
+const T = () => TERRAIN[zone];
+function resolve(e, r){
+  for (const o of T().obs){
+    const d = dist(e.x, e.y, o.x, o.y), m = o.r + r;
+    if (d < m && d > .001){ e.x = o.x + (e.x - o.x)/d*m; e.y = o.y + (e.y - o.y)/d*m; }
+    else if (d <= .001) e.x += m;
+  }
+}
+function randomPoint(awayFromPlayer){
+  const t = T();
+  for (let i = 0; i < 60; i++){
+    const x = rr(16, WW-16), y = rr(TOP+16, t.maxY - 6);
+    if (t.obs.some(o => dist(x,y,o.x,o.y) < o.r + 8)) continue;
+    if (awayFromPlayer && dist(x,y,player.x,player.y) < 80) continue;
+    return { x, y };
+  }
+  return { x:rr(16,WW-16), y:rr(TOP+16, t.maxY-6) };
+}
+function spawnBird(away = true){
+  const list = BY_ZONE[zone], open = list.filter(s => !tagged.includes(s.id));
+  const sp = open.length && rnd() < .75 ? pick(open) : pick(list);
+  const p = randomPoint(away);
+  if (sp.type === 'swimmer') p.y = rr(250, T().maxY);
+  birds.push({ sp, x:p.x, y:p.y, tx:p.x, ty:p.y, dir: rnd() < .5 ? 1 : -1, state:'wander', t:rnd()*5, timer:0, idle:rr(0,1.5), alt: isFlyer(sp) ? 12 : 0, stunT:0, bo:null, moving:false });
+}
+function enterZone(){
+  const t = T();
+  player.x = t.spawn.x; player.y = t.spawn.y; player.kx = player.ky = 0;
+  birds = []; darts = []; nets = []; baits = []; parts = [];
+  for (let i = 0; i < 4; i++) spawnBird(true);
+  dinos = ZONES[zone].dinos.map((c, k) => { const p = randomPoint(true); return { kind:k, x:p.x, y:Math.min(p.y, 200), tx:p.x, ty:p.y, dir:1, state:'wander', chaseT:0, rest:2, t:0, moving:false, timer:0 }; });
+  if (poacher){ poacher = null; poacherTimer = Math.max(poacherTimer, 12); }
+  respawnT = 2;
+  updateUI();
+}
+function travel(z){
+  if (state !== 'play' || z === zone) return;
+  zone = z; enterZone(); beep([400,500,600], .05, 'triangle');
+  const left = BY_ZONE[z].filter(s => !tagged.includes(s.id)).length;
+  setMsg(`${ZONES[z].name}: ${left ? left + ' new species here' : 'all species here are tagged'}`);
+}
+function nearestBait(x, y, r){ let b = null, bd = r; for (const k of baits){ const d = dist(x,y,k.x,k.y); if (d < bd){ bd = d; b = k; } } return b; }
+function birdHB(b){
+  const sp = b.sp;
+  if (isFlyer(sp)) return { x:b.x, y:b.y - 5 - b.alt, r:5 + sp.span/6 };
+  if (sp.type === 'swimmer') return { x:b.x, y:b.y - 3, r:6 };
+  return { x:b.x + b.dir*sp.bw/4, y:b.y - sp.leg - sp.bh/2 - 2, r:Math.max(5, sp.bw/2 + 1) };
+}
+function burst(x, y, col, n, spd = 30, life = .6){ for (let i = 0; i < n; i++){ const a = rnd()*Math.PI*2, s = rr(spd*.3, spd); parts.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life, max:life, col }); } }
+
+// ---------- actions ----------
+function fire(){
+  if (state !== 'play' || fireCd > 0) return;
+  const big = weapon === 'big', sp = big ? 130 : 165;
+  fireCd = big ? .6 : .32;
+  darts.push({ x:player.x + player.ax*8, y:player.y - 10 + player.ay*4, vx:player.ax*sp, vy:player.ay*sp, big, life: big ? .8 : .7 });
+  beep(big ? [260,170] : [900,620], .035, 'square', .03);
+}
+function swap(){ if (state !== 'play') return; weapon = weapon === 'small' ? 'big' : 'small'; beep([520,780], .04, 'triangle'); setMsg(weapon === 'big' ? 'Poacher blowgun ready' : 'Bird blowgun ready', 1.4); updateUI(); }
+function dropBait(){
+  if (state !== 'play') return;
+  if (baitCd > 0){ setMsg(`Bait is ready in ${Math.ceil(baitCd)}s`, 1.4); return; }
+  const t = T();
+  baits = [{ x:clamp(player.x + player.ax*10, 10, WW-10), y:clamp(player.y + player.ay*8 + 2, TOP+10, t.maxY), life:14, kind:ZONES[zone].bait }];
+  baitCd = 8; beep([500,700], .05, 'triangle');
+  hint('bait', 'Bait down. Step back and let the birds come to eat.');
+  updateUI();
+}
+function act(){
+  if (state !== 'play') return;
+  if (poacher && poacher.state === 'stun' && dist(player.x, player.y, poacher.x, poacher.y) < 18){
+    jailed++; score += 10;
+    parts.push({ x:poacher.x, y:poacher.y, cage:true, life:1.2, max:1.2 });
+    poacher = null; poacherTimer = jailed < 5 ? rr(25, 40) : Infinity;
+    beep([330,440,550,660], .07, 'square', .045);
+    setMsg(jailed < 5 ? `Poacher jailed! +10 (${jailed} of 5)` : 'All 5 poachers jailed. Full bonus!');
+    updateUI(); return;
+  }
+  let near = null, nd = 18;
+  for (const b of birds) if (b.state === 'stun'){ const d = dist(player.x, player.y, b.x, b.y); if (d < nd){ nd = d; near = b; } }
+  if (!near){ setMsg('Nothing to tag here. Stun a bird first.', 1.6); return; }
+  const sp = near.sp;
+  if (tagged.includes(sp.id)){ setMsg(`${sp.name} is already in your Bird Book.`, 2); return; }
+  birds.splice(birds.indexOf(near), 1);
+  tagged.push(sp.id); score += 10;
+  burst(near.x, near.y - 6, '#ffe066', 14, 40);
+  beep([660,880,1100,1320], .06, 'square', .04);
+  renderBook(); updateUI();
+  showCard(sp, true);
+}
+function showCard(sp, fresh){
+  const prev = state; state = 'card';
+  const zoneName = ZONES[sp.zone].name;
+  showOverlay(`<div class="card" role="dialog" aria-label="${sp.name}">
+    <canvas class="art" width="48" height="32"></canvas>
+    <p class="eyebrow ${sp.special ? 'warn' : ''}">${sp.special ? 'Not a bird' : (fresh ? 'New tag' : 'Bird Book')} · ${zoneName}</p>
+    <h2>${sp.name}</h2>
+    <p class="sci">${sp.sci}</p>
+    <p>${sp.fact}</p>
+    <p class="when">${sp.when}</p>
+    ${fresh ? `<p class="eyebrow">+10 points · ${tagged.length} of 10 tagged</p>` : ''}
+    <button class="btn" id="cardOk">Continue</button>
+  </div>`);
+  const g = overlay.querySelector('canvas').getContext('2d');
+  g.imageSmoothingEnabled = false;
+  const fly = isFlyer(sp);
+  g.save(); g.scale(2,2);
+  drawBird(g, sp, 12, fly ? 13 : 15, .2, 1, fly ? 'fly' : 'idle', fly ? 2 : 0);
+  g.restore();
+  const ok = $('cardOk'); ok.focus();
+  ok.onclick = () => closeCard(prev);
+  showCard.prev = prev;
+}
+function closeCard(prev){
+  hideOverlay();
+  state = prev === 'pause' ? 'pause' : 'play';
+  if (state === 'pause'){ showPause(); return; }
+  if (tagged.length >= 10){ endGame(true); return; }
+  const left = BY_ZONE[zone].filter(s => !tagged.includes(s.id)).length;
+  if (!left) setMsg('Every species here is tagged. Travel to a new habitat (1–4).', 3.4);
+  updateUI();
+}
+function hurt(fx, fy, why){
+  if (player.inv > 0 || state !== 'play') return;
+  hearts--; player.inv = 1.6; shake = .25;
+  const a = Math.atan2(player.y - fy, player.x - fx);
+  player.kx = Math.cos(a)*130; player.ky = Math.sin(a)*130;
+  beep([220,150,110], .08, 'sawtooth', .05);
+  if (hearts <= 0){ endGame(false); return; }
+  setMsg(`${why} ${hearts} ${hearts === 1 ? 'heart' : 'hearts'} left.`);
+}
+
+// ---------- screens ----------
+function showTitle(){
+  state = 'title';
+  zone = 0; enterZone(); player.x = -500;
+  showOverlay(`<div class="card title-card">
+    <h2>Prehistoric Bird Bash</h2>
+    <p>Tag 10 different prehistoric birds. Catch poachers in the act. Stay away from the dinosaurs.</p>
+    <p class="hint">Choose your hunter</p>
+    <div class="pick">${AVATARS.map((a,i) => `<button class="av" data-i="${i}" aria-pressed="${i === avatarIdx}"><canvas width="20" height="22"></canvas>${a.name}</button>`).join('')}</div>
+    <button class="btn" id="startBtn">Start field season</button>
+    <p class="hint">Keyboard: arrows, Space, E, B, Q · Best score: ${best}</p>
+  </div>`);
+  overlay.querySelectorAll('.av').forEach((b, i) => {
+    const g = b.querySelector('canvas').getContext('2d'); g.imageSmoothingEnabled = false;
+    drawPerson(g, AVATARS[i], 10, 21, 'down', 0, false, 'small', 0, 1);
+    b.onclick = () => { avatarIdx = i; overlay.querySelectorAll('.av').forEach((x, k) => x.setAttribute('aria-pressed', k === i)); };
+  });
+  $('startBtn').onclick = startGame;
+  updateUI();
+}
+function startGame(){
+  tagged = []; jailed = 0; hearts = 3; score = 0; weapon = 'small';
+  fireCd = 0; baitCd = 0; poacherTimer = 20; playTime = 0; hints = {};
+  player = newPlayer(); poacher = null;
+  zone = 0; state = 'play';
+  hideOverlay(); enterZone(); renderBook(); updateUI();
+  beep([392,523,659,784], .08, 'square', .04);
+  setMsg('Forest. Press B to drop bait, then Space to dart a bird.', 4);
+}
+function showPause(){
+  state = 'pause';
+  showOverlay(`<div class="card title-card"><h2>Paused</h2><p>Birds ${tagged.length}/10 · Poachers ${jailed}/5 · Score ${score}</p><button class="btn" id="resumeBtn">Resume</button></div>`);
+  $('resumeBtn').onclick = resume; $('resumeBtn').focus();
+}
+function resume(){ if (state !== 'pause') return; hideOverlay(); state = 'play'; updateUI(); }
+function fmtTime(s){ const m = Math.floor(s/60), r = Math.floor(s%60); return `${m}:${String(r).padStart(2,'0')}`; }
+function endGame(win){
+  state = win ? 'win' : 'over';
+  const newBest = score > best;
+  if (newBest){ best = score; store('pbb-best', String(best)); }
+  beep(win ? [523,659,784,1046,1318] : [392,330,262,196], .12, 'square', .045);
+  showOverlay(`<div class="card title-card">
+    <h2>${win ? 'Field season complete' : 'Out of hearts'}</h2>
+    <p>${win ? `${AVATARS[avatarIdx].name} filled the Bird Book with 10 species.` : 'The field season ends early. Your Bird Book keeps what you tagged.'}</p>
+    <div class="stats-row"><span>Birds<b>${tagged.length}/10</b></span><span>Poachers<b>${jailed}/5</b></span><span>Score<b>${score}</b></span><span>Time<b>${fmtTime(playTime)}</b></span></div>
+    <p class="hint">${newBest ? 'New best score!' : `Best score: ${best}`} · Top possible score: 150</p>
+    <button class="btn" id="againBtn">Play again</button>
+  </div>`);
+  $('againBtn').onclick = showTitle; $('againBtn').focus();
+  updateUI();
+}
+
+// ---------- update ----------
+function updatePlayer(dt){
+  const p = player; p.t += dt;
+  const mx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), my = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+  p.moving = !!(mx || my);
+  if (p.moving){
+    const l = Math.hypot(mx, my); p.ax = mx/l; p.ay = my/l;
+    p.x += p.ax*56*dt; p.y += p.ay*56*dt;
+    p.dir4 = mx ? (mx > 0 ? 'right' : 'left') : (my > 0 ? 'down' : 'up');
+  }
+  p.x += p.kx*dt; p.y += p.ky*dt; p.kx *= Math.pow(.002, dt); p.ky *= Math.pow(.002, dt);
+  resolve(p, 4);
+  p.x = clamp(p.x, 6, WW-6); p.y = clamp(p.y, TOP + 8, T().maxY);
+  if (p.inv > 0) p.inv -= dt;
+  if (keys.fire) fire();
+}
+function updateBird(b, dt){
+  const sp = b.sp, fly = isFlyer(sp), t = T();
+  b.t += dt;
+  if (b.state === 'stun'){ b.stunT -= dt; b.alt = Math.max(0, b.alt - 40*dt); if (b.stunT <= 0){ b.state = 'flee'; b.timer = 1.5; } return; }
+  if (b.state === 'netted'){ b.alt = Math.max(0, b.alt - 40*dt); b.moving = false; return; }
+  const pd = dist(b.x, b.y, player.x, player.y);
+  if (b.state !== 'flee' && pd < (b.state === 'eat' ? 18 : sp.shy)){ b.state = 'flee'; b.timer = 1.4; b.bo = null; }
+  let spd = sp.speed, tx = b.tx, ty = b.ty;
+  if (b.state === 'flee'){
+    b.timer -= dt;
+    const a = Math.atan2(b.y - player.y, b.x - player.x);
+    tx = b.x + Math.cos(a)*40; ty = b.y + Math.sin(a)*40; spd = sp.speed*2;
+    if (b.timer <= 0) b.state = 'wander';
+  } else {
+    const bait = nearestBait(b.x, b.y, 120);
+    if (bait){
+      if (!b.bo) b.bo = { x:rr(-10,10), y:rr(-5,5) };
+      tx = bait.x + b.bo.x; ty = bait.y + b.bo.y;
+      if (b.state !== 'eat') b.state = dist(b.x, b.y, tx, ty) < 2 ? 'eat' : 'approach';
+    } else {
+      if (b.state === 'eat' || b.state === 'approach') b.state = 'wander';
+      b.bo = null;
+      if (b.idle > 0){ b.idle -= dt; spd = 0; }
+      else if (dist(b.x, b.y, b.tx, b.ty) < 2 || (b.timer -= dt) <= 0){
+        const a = rnd()*Math.PI*2, d = rr(20, 80);
+        b.tx = clamp(b.x + Math.cos(a)*d, 12, WW-12); b.ty = clamp(b.y + Math.sin(a)*d, TOP+12, t.maxY);
+        b.timer = rr(3, 6); b.idle = rnd() < .5 ? rr(.5, 2) : 0;
+      }
+      tx = b.tx; ty = b.ty;
+    }
+  }
+  if (b.state === 'eat') spd = 0;
+  const dx = tx - b.x, dy = ty - b.y, d = Math.hypot(dx, dy);
+  if (d > 1 && spd > 0){ const m = Math.min(d, spd*dt); b.x += dx/d*m; b.y += dy/d*m; if (Math.abs(dx) > .3) b.dir = dx > 0 ? 1 : -1; b.moving = true; }
+  else b.moving = false;
+  if (fly){ const want = (b.state === 'eat' || (b.state === 'approach' && d < 14)) ? 0 : 12; b.alt += clamp(want - b.alt, -30*dt, 30*dt); }
+  b.x = clamp(b.x, 8, WW-8);
+  b.y = clamp(b.y, sp.type === 'swimmer' ? 248 : TOP + 10, t.maxY);
+  if (!fly || b.alt < 2) resolve(b, 3);
+}
+function updateDino(d, dt){
+  d.t += dt;
+  const pd = state === 'play' ? dist(d.x, d.y, player.x, player.y) : 999;
+  if (d.rest > 0) d.rest -= dt;
+  if (d.state === 'wander' && pd < 75 && d.rest <= 0){ d.state = 'chase'; d.chaseT = 3; beep([140,110,90], .09, 'sawtooth', .05); hint('dino', 'Dinosaur! Run. Darts bounce off them.'); }
+  let tx = d.tx, ty = d.ty, spd = 12;
+  if (d.state === 'chase'){
+    d.chaseT -= dt; tx = player.x; ty = player.y; spd = 33;
+    if (d.chaseT <= 0 || pd > 130){ d.state = 'wander'; d.rest = 2.5; }
+  } else if (dist(d.x, d.y, d.tx, d.ty) < 3 || (d.timer -= dt) <= 0){
+    const p = randomPoint(false); d.tx = p.x; d.ty = p.y; d.timer = rr(4, 8);
+  }
+  const dx = tx - d.x, dy = ty - d.y, l = Math.hypot(dx, dy);
+  if (l > 1){ const m = Math.min(l, spd*dt); d.x += dx/l*m; d.y += dy/l*m; if (Math.abs(dx) > .3) d.dir = dx > 0 ? 1 : -1; d.moving = true; } else d.moving = false;
+  resolve(d, 7);
+  d.x = clamp(d.x, 14, WW-14); d.y = clamp(d.y, TOP + 18, T().maxY);
+  if (state === 'play' && player.inv <= 0 && dist(d.x, d.y - 6, player.x, player.y - 6) < 13){
+    hurt(d.x, d.y, 'Chomp!');
+    const a = Math.atan2(d.y - player.y, d.x - player.x);
+    d.state = 'wander'; d.rest = 5; d.timer = 5;
+    d.tx = clamp(d.x + Math.cos(a)*90, 14, WW-14); d.ty = clamp(d.y + Math.sin(a)*90, TOP + 18, T().maxY);
+  }
+}
+function spawnPoacher(){
+  const left = rnd() < .5;
+  poacher = { x: left ? 4 : WW-4, y: rr(TOP + 40, T().maxY - 10), dir: left ? 1 : -1, dir4: left ? 'right' : 'left', state:'hunt', target:null, actT:0, netCd:2.5, stunT:0, t:0, moving:false };
+  beep([200,260,200], .08, 'square', .04);
+  setMsg('A poacher is here! Catch them in the act with the poacher blowgun.', 3.4);
+}
+function updatePoacher(dt){
+  const P = poacher; P.t += dt;
+  const pd = dist(P.x, P.y, player.x, player.y);
+  let tx = P.x, ty = P.y, spd = 0;
+  if (P.state === 'hunt'){
+    if (!P.target || !birds.includes(P.target) || P.target.state === 'stun' || P.target.state === 'netted'){
+      let best = null, bd = 1e9;
+      for (const b of birds){ if (b.state === 'stun' || b.state === 'netted') continue; const d = dist(P.x, P.y, b.x, b.y); if (d < bd){ bd = d; best = b; } }
+      P.target = best;
+    }
+    if (P.target){
+      tx = P.target.x; ty = P.target.y; spd = 27;
+      if (dist(P.x, P.y, tx, ty) < 10){
+        P.state = 'act'; P.actT = 0; P.target.state = 'netted'; spd = 0;
+        beep([600,500,600,500], .06, 'square', .035);
+        setMsg(`The poacher is netting a ${P.target.sp.name}! Stun them now.`, 3);
+      }
+    }
+    P.netCd -= dt;
+    if (pd < 70 && P.netCd <= 0 && state === 'play'){
+      const a = Math.atan2(player.y - P.y, player.x - P.x);
+      nets.push({ x:P.x, y:P.y - 9, vx:Math.cos(a)*75, vy:Math.sin(a)*75, life:1.4 });
+      P.netCd = 2.8; beep([300,240], .04, 'triangle', .03);
+    }
+  } else if (P.state === 'act'){
+    P.actT += dt;
+    if (!birds.includes(P.target)){ P.state = 'hunt'; P.target = null; }
+    else if (P.actT >= 4.5){
+      const b = P.target; birds.splice(birds.indexOf(b), 1);
+      burst(b.x, b.y - 6, '#d9d2c0', 12, 30);
+      setMsg(`The poacher got away with a ${b.sp.name}.`, 3);
+      P.state = 'escape'; P.target = null;
+    }
+  } else if (P.state === 'stun'){
+    P.stunT -= dt;
+    if (P.stunT <= 0){ P.state = 'escape'; setMsg('The poacher woke up and ran off.'); }
+  }
+  if (P.state === 'escape'){ tx = P.x < WW/2 ? -40 : WW + 40; ty = P.y; spd = 42; }
+  const dx = tx - P.x, dy = ty - P.y, l = Math.hypot(dx, dy);
+  if (spd > 0 && l > 1){
+    const m = Math.min(l, spd*dt); P.x += dx/l*m; P.y += dy/l*m; P.moving = true;
+    P.dir4 = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    if (P.state !== 'escape') resolve(P, 4);
+  } else P.moving = false;
+  if (P.state === 'escape' && (P.x < -20 || P.x > WW + 20)){ poacher = null; poacherTimer = rr(25, 40); }
+}
+function updateDarts(dt){
+  const t = T();
+  for (const d of darts){
+    d.x += d.vx*dt; d.y += d.vy*dt; d.life -= dt;
+    if (d.x < 0 || d.x > WW || d.y < 0 || d.y > WH){ d.life = 0; continue; }
+    if (t.obs.some(o => dist(d.x, d.y + 9, o.x, o.y) < o.r)){ d.life = 0; burst(d.x, d.y, '#c8b48a', 4, 15, .3); continue; }
+    for (const b of birds){
+      if (b.state === 'stun' || b.state === 'netted') continue;
+      const h = birdHB(b);
+      if (dist(d.x, d.y, h.x, h.y) < h.r + 1){
+        d.life = 0;
+        if (d.big){ b.state = 'flee'; b.timer = 1.2; setMsg('Too strong for birds! Press Q for the bird blowgun.', 2.4); }
+        else {
+          b.state = 'stun'; b.stunT = 6; b.bo = null;
+          beep([1200,1500], .05, 'square', .035);
+          burst(h.x, h.y, '#ffe066', 6, 20, .4);
+          hint('stun', 'Stunned! Walk over and press E to tag it.');
+        }
+        break;
+      }
+    }
+    if (d.life <= 0) continue;
+    if (poacher && poacher.state !== 'escape' && dist(d.x, d.y, poacher.x, poacher.y - 9) < 7){
+      d.life = 0;
+      if (!d.big) setMsg('Bird darts are too weak for poachers. Press Q to switch.', 2.4);
+      else if (poacher.state === 'act'){
+        poacher.state = 'stun'; poacher.stunT = 7;
+        if (poacher.target){ poacher.target.state = 'flee'; poacher.target.timer = 1.5; poacher.target = null; }
+        beep([900,700,500], .06, 'square', .045);
+        setMsg('Poacher stunned! Walk over and press E to jail them.', 3);
+      } else if (poacher.state === 'hunt') setMsg('Not caught in the act yet. Wait until they net a bird.', 2.6);
+      continue;
+    }
+    for (const dn of dinos){ if (dist(d.x, d.y, dn.x, dn.y - 11) < 11){ d.life = 0; burst(d.x, d.y, '#ffffff', 4, 20, .3); hint('dinodart', 'Darts bounce off dinosaurs. Keep your distance!'); break; } }
+  }
+  darts = darts.filter(d => d.life > 0);
+  for (const n of nets){
+    n.x += n.vx*dt; n.y += n.vy*dt; n.life -= dt;
+    if (state === 'play' && dist(n.x, n.y, player.x, player.y - 9) < 7){ n.life = 0; hurt(n.x, n.y, 'Caught in a net!'); }
+  }
+  nets = nets.filter(n => n.life > 0);
+}
+function update(dt){
+  time += dt;
+  if (toastTimer > 0){ toastTimer -= dt; if (toastTimer <= 0) toast.style.opacity = '0'; }
+  const live = state === 'play' || state === 'title';
+  if (!live) return;
+  if (state === 'play'){
+    playTime += dt;
+    updatePlayer(dt);
+    if (fireCd > 0) fireCd -= dt;
+    if (baitCd > 0){ baitCd -= dt; uiT -= dt; if (uiT <= 0 || baitCd <= 0){ uiT = .25; updateUI(); } }
+    if (!poacher && jailed < 5){ poacherTimer -= dt; if (poacherTimer <= 0) spawnPoacher(); }
+    if (poacher) updatePoacher(dt);
+    updateDarts(dt);
+    if (shake > 0) shake -= dt;
+  }
+  for (const b of baits) b.life -= dt;
+  baits = baits.filter(b => b.life > 0);
+  birds.forEach(b => updateBird(b, dt));
+  dinos.forEach(d => updateDino(d, dt));
+  if (birds.length < 4){ respawnT -= dt; if (respawnT <= 0){ spawnBird(true); respawnT = 3; } }
+  for (const p of parts){ p.life -= dt; if (!p.cage){ p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 20*dt; } }
+  parts = parts.filter(p => p.life > 0);
+  if (rnd() < dt*6) parts.push({ smoke:true, x:T().volcX + rr(-4,4), y:3, vx:rr(-3,3), vy:rr(-8,-4), life:2.4, max:2.4, s:rr(2,4) });
+}
+
+// ---------- draw ----------
+const HEART = ['.XX.XX.','XXXXXXX','XXXXXXX','.XXXXX.','..XXX..','...X...'];
+function drawHeart(x, y, full){
+  HEART.forEach((row, j) => { for (let i = 0; i < 7; i++) if (row[i] === 'X'){ ctx.fillStyle = full ? (j === 1 && i === 1 ? '#ffb0a8' : '#e8433a') : '#3a2a2a'; ctx.fillRect(x+i, y+j, 1, 1); } });
+}
+function drawBait(b){
+  const x = Math.round(b.x), y = Math.round(b.y), fade = b.life < 3 && Math.floor(time*8) % 2;
+  if (fade) return;
+  const R = (dx,dy,w,h,c) => { ctx.fillStyle = c; ctx.fillRect(x+dx, y+dy, w, h); };
+  R(-4,-1,9,2,'rgba(0,0,0,.2)');
+  if (b.kind === 'berries'){ [[-3,-3],[0,-4],[2,-2],[-1,-1],[3,-4]].forEach(([dx,dy]) => { R(dx,dy,2,2,'#c2283a'); R(dx,dy,1,1,'#ff8a9a'); }); }
+  else if (b.kind === 'snails'){ [[-3,-3],[1,-2],[0,-5]].forEach(([dx,dy]) => { R(dx,dy,3,2,'#8a5a2b'); R(dx+1,dy,1,1,'#e8c08a'); }); }
+  else if (b.kind === 'seeds'){ for (let i = 0; i < 9; i++) R(-4 + (i*3)%9, -3 + (i*5)%4, 1, 1, '#f2dc8a'); R(-3,-2,7,1,'#c9a04a'); }
+  else { R(-4,-3,7,3,'#b8c4cc'); R(3,-4,2,1,'#b8c4cc'); R(3,-1,2,1,'#b8c4cc'); R(-3,-2,1,1,'#222'); R(-1,-3,3,1,'#dfe8ee'); }
+}
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);
+  const t = T();
+  const visible = state !== 'title';
+  let camX = clamp(Math.round(player.x - W/2), 0, WW - W), camY = clamp(Math.round(player.y - 8 - H/2), 0, WH - H);
+  if (!visible){ camX = Math.round(120 + Math.sin(time*.08)*110); camY = 60; }
+  const sx = shake > 0 ? Math.round(rr(-1.5,1.5)) : 0, sy = shake > 0 ? Math.round(rr(-1.5,1.5)) : 0;
+  ctx.drawImage(t.canvas, -camX + sx, -camY + sy);
+  ctx.save(); ctx.translate(-camX + sx, -camY + sy);
+  for (const p of parts) if (p.smoke){ const a = p.life/p.max; ctx.fillStyle = `rgba(90,80,85,${(a*.6).toFixed(2)})`; const s = Math.round(p.s + (1-a)*5); ctx.fillRect(Math.round(p.x - s/2), Math.round(p.y + (p.max - p.life)*p.vy), s, s); }
+  if (zone === 3){
+    for (let x = Math.max(0, camX - 2); x < Math.min(WW, camX + W + 2); x++){
+      ctx.fillStyle = '#e8f4f6'; ctx.fillRect(x, 272 + Math.round(Math.sin(x*.09 + time*2)*1.5), 1, 1);
+    }
+  }
+  baits.forEach(drawBait);
+  for (const b of birds) if (isFlyer(b.sp) && b.alt > 1){ const w = Math.round(b.sp.span*.8); ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(Math.round(b.x - w/2), Math.round(b.y - 1), w, 2); }
+  const ents = [];
+  birds.forEach(b => ents.push({ y:b.y, f:() => {
+    const fly = isFlyer(b.sp);
+    const mode = b.state === 'stun' ? 'stun' : b.state === 'eat' ? 'eat' : (fly && b.alt > 1) ? 'fly' : b.moving ? 'walk' : 'idle';
+    drawBird(ctx, b.sp, b.x, b.y, b.t, b.dir, mode, b.alt);
+    const h = birdHB(b);
+    if (b.state === 'stun'){
+      for (let k = 0; k < 3; k++){ const a = time*5 + k*2.09; ctx.fillStyle = '#ffe066'; ctx.fillRect(Math.round(h.x + Math.cos(a)*5), Math.round(h.y - h.r - 2 + Math.sin(a)*1.5), 1, 1); }
+      if (b.stunT < 2 && Math.floor(time*6) % 2){ ctx.fillStyle = '#fff'; ctx.fillRect(Math.round(h.x), Math.round(h.y - h.r - 6), 1, 3); }
+    }
+    if (b.state === 'netted'){
+      ctx.fillStyle = 'rgba(230,222,200,.85)';
+      for (let i = -6; i <= 6; i += 3) ctx.fillRect(Math.round(h.x + i), Math.round(h.y - 6), 1, 12);
+      for (let j = -6; j <= 6; j += 3) ctx.fillRect(Math.round(h.x - 6), Math.round(h.y + j), 13, 1);
+    }
+  }}));
+  dinos.forEach(d => ents.push({ y:d.y, f:() => drawDino(ctx, d, d.t) }));
+  if (poacher){
+    const P = poacher;
+    ents.push({ y:P.y, f:() => {
+      drawPerson(ctx, POACHER, P.x, P.y, P.dir4, P.t, P.moving, null, 0, 0);
+      if (P.state === 'act'){
+        ctx.fillStyle = '#ff3b2f'; ctx.fillRect(Math.round(P.x), Math.round(P.y - 29), 1, 4); ctx.fillRect(Math.round(P.x), Math.round(P.y - 24), 1, 1);
+        ctx.fillStyle = '#000'; ctx.fillRect(Math.round(P.x - 7), Math.round(P.y - 22), 14, 3);
+        ctx.fillStyle = '#ff5a3a'; ctx.fillRect(Math.round(P.x - 6), Math.round(P.y - 21), Math.round(12*P.actT/4.5), 1);
+      }
+      if (P.state === 'stun') for (let k = 0; k < 3; k++){ const a = time*5 + k*2.09; ctx.fillStyle = '#ffe066'; ctx.fillRect(Math.round(P.x + Math.cos(a)*5), Math.round(P.y - 22 + Math.sin(a)*1.5), 1, 1); }
+    }});
+  }
+  if (visible && !(player.inv > 0 && Math.floor(time*20) % 2)){
+    ents.push({ y:player.y, f:() => drawPerson(ctx, AVATARS[avatarIdx], player.x, player.y, player.dir4, player.t, player.moving, weapon, player.ax, player.ay) });
+  }
+  ents.sort((a,b) => a.y - b.y).forEach(e => e.f());
+  for (const d of darts){
+    const l = Math.hypot(d.vx, d.vy), ux = d.vx/l, uy = d.vy/l;
+    for (let i = 0; i < (d.big ? 4 : 3); i++){ ctx.fillStyle = i === 0 ? (d.big ? '#ff7a2f' : '#c2412b') : (d.big ? '#ffd36b' : '#f2e3b3'); ctx.fillRect(Math.round(d.x - ux*i), Math.round(d.y - uy*i), d.big ? 2 : 1, d.big ? 2 : 1); }
+  }
+  for (const n of nets){ ctx.fillStyle = '#e6dec8'; const x = Math.round(n.x), y = Math.round(n.y); ctx.fillRect(x-2,y-2,5,1); ctx.fillRect(x-2,y+2,5,1); ctx.fillRect(x-2,y-2,1,5); ctx.fillRect(x+2,y-2,1,5); ctx.fillRect(x,y-2,1,5); ctx.fillRect(x-2,y,5,1); }
+  for (const p of parts){
+    if (p.smoke) continue;
+    if (p.cage){
+      const x = Math.round(p.x), y = Math.round(p.y);
+      ctx.fillStyle = '#5a5a62'; ctx.fillRect(x-7, y-20, 15, 2); ctx.fillRect(x-7, y-1, 15, 2);
+      for (let i = -7; i <= 7; i += 3) ctx.fillRect(x + i, y - 20, 1, 20);
+      continue;
+    }
+    ctx.fillStyle = p.col; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
+  }
+  ctx.restore();
+
+  if (zone === 1){
+    ctx.fillStyle = 'rgba(235,240,236,.13)';
+    for (let k = 0; k < 4; k++){
+      const x = ((time*6*(k%2 ? 1 : -1) + k*90) % (W + 120) + W + 120) % (W + 120) - 60, y = 20 + k*36;
+      for (let dy = -6; dy <= 6; dy++){ const w = Math.round(50*Math.sqrt(1 - dy*dy/36)); ctx.fillRect(Math.round(x - w), y + dy, w*2, 1); }
+    }
+  }
+  if (!visible) return;
+  // HUD
+  ctx.fillStyle = 'rgba(18,12,10,.55)'; ctx.fillRect(2, 2, 32, 10); ctx.fillRect(W - 46, 2, 44, 10);
+  for (let i = 0; i < 3; i++) drawHeart(4 + i*10, 4, i < hearts);
+  ctx.font = '8px "Press Start 2P", monospace'; ctx.textBaseline = 'top';
+  const txt = `${tagged.length}/10`;
+  ctx.fillStyle = '#000'; ctx.fillText(txt, W - 43, 4);
+  ctx.fillStyle = '#ffe9b8'; ctx.fillText(txt, W - 44, 3);
+  ctx.fillStyle = weapon === 'big' ? '#ff7a2f' : '#c8a165';
+  ctx.fillRect(38, 6, weapon === 'big' ? 12 : 9, weapon === 'big' ? 2 : 1);
+  if (poacher && poacher.state !== 'escape'){
+    const px = poacher.x - camX, py = poacher.y - 10 - camY;
+    if (px < 0 || px > W || py < 0 || py > H){
+      const ex = clamp(px, 4, W - 6), ey = clamp(py, 16, H - 6);
+      if (Math.floor(time*4) % 2){ ctx.fillStyle = '#ff3b2f'; ctx.fillRect(Math.round(ex), Math.round(ey) - 4, 2, 5); ctx.fillRect(Math.round(ex), Math.round(ey) + 2, 2, 2); }
+    }
+  }
+}
+
+// ---------- input ----------
+const KEYMAP = { ArrowUp:'up', KeyW:'up', ArrowDown:'down', KeyS:'down', ArrowLeft:'left', KeyA:'left', ArrowRight:'right', KeyD:'right' };
+window.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = KEYMAP[e.code];
+  if (state === 'title'){
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight'){
+      avatarIdx = (avatarIdx + (e.code === 'ArrowRight' ? 1 : AVATARS.length - 1)) % AVATARS.length;
+      overlay.querySelectorAll('.av').forEach((x, i) => x.setAttribute('aria-pressed', i === avatarIdx));
+      e.preventDefault(); return;
+    }
+    if (e.code === 'Enter' || e.code === 'Space'){ if (document.activeElement && document.activeElement.classList.contains('av')) return; e.preventDefault(); startGame(); }
+    return;
+  }
+  if (state === 'card'){ if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE' || e.code === 'Escape'){ e.preventDefault(); if (!e.repeat) closeCard(showCard.prev); } return; }
+  if (state === 'pause'){ if (e.code === 'KeyP' || e.code === 'Escape' || e.code === 'Enter'){ e.preventDefault(); resume(); } return; }
+  if (state !== 'play') return;
+  if (k){ keys[k] = true; e.preventDefault(); return; }
+  switch (e.code){
+    case 'Space': keys.fire = true; e.preventDefault(); break;
+    case 'KeyE': case 'Enter': if (!e.repeat) act(); e.preventDefault(); break;
+    case 'KeyB': if (!e.repeat) dropBait(); break;
+    case 'KeyQ': case 'ShiftLeft': case 'ShiftRight': if (!e.repeat) swap(); break;
+    case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': travel(+e.code.slice(5) - 1); break;
+    case 'KeyP': case 'Escape': showPause(); break;
+    case 'KeyM': toggleMute(); break;
+  }
+});
+window.addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; if (e.code === 'Space') keys.fire = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') showPause(); });
+function toggleMute(){ muted = !muted; store('pbb-muted', muted ? '1' : '0'); updateUI(); }
+
+$('tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) travel(+b.dataset.z); });
+$('wSmall').onclick = () => { if (weapon !== 'small') swap(); };
+$('wBig').onclick = () => { if (weapon !== 'big') swap(); };
+$('baitBtn').onclick = dropBait;
+$('muteBtn').onclick = toggleMute;
+document.querySelectorAll('.dpad button').forEach(b => {
+  const k = b.dataset.k;
+  const on = e => { e.preventDefault(); keys[k] = true; }, off = e => { e.preventDefault(); keys[k] = false; };
+  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+});
+document.querySelectorAll('.acts button').forEach(b => {
+  const a = b.dataset.act;
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (a === 'fire') keys.fire = true; else if (a === 'tag') act(); else if (a === 'bait') dropBait(); else if (a === 'swap') swap();
+  });
+  const off = () => { if (a === 'fire') keys.fire = false; };
+  b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+});
+
+// ---------- loop ----------
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.05, (now - last)/1000); last = now;
+  update(dt); draw();
+  requestAnimationFrame(frame);
+}
+buildBook(); renderBook();
+showTitle();
+if (document.fonts && document.fonts.load) document.fonts.load('8px "Press Start 2P"').catch(() => {});
+requestAnimationFrame(frame);
+})();
+</script>
+
+</html>
